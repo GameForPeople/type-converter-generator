@@ -36,6 +36,7 @@ void                       ErrorLog   ( const std::string& msg                  
 
 int main( int argc, char *argv[] )
 {
+	std::cout << ""                                                     << std::endl;
 	std::cout << "Type Converter Generator ver 0.1"                     << std::endl;
 	std::cout << "Copyright 2020, Won Seong-Yeon. All Rights Reserved." << std::endl;
 	std::cout << "		KoreaGameMaker@gmail.com"                       << std::endl;
@@ -47,34 +48,36 @@ int main( int argc, char *argv[] )
 	InfoLog( "Run Type Converter Generator!" );
 
 	// 인자 검사
-	if ( argc < 4 ) 
+	if ( argc < 5 ) 
 	{
-		argv[0] = (char *)("Link");
-		argv[1] = (char *)("Link/Types.h");
-		argv[2] = (char *)("Link/TypeConverter.h");
-		argv[3] = (char *)("Link/TypeConverter.cpp");
+		WarnLog( "argc is under 5, use default argv!" );
+
+		argv[1] = (char *)("Link");
+		argv[2] = (char *)("Link/Types.h");
+		argv[3] = (char *)("Link/TypeConverter.h");
+		argv[4] = (char *)("Link/TypeConverter.cpp");
 	}
 
 	std::map< std::string /* => TypeData Class Name */, TypeData > typeDataCont;
 
-	const std::filesystem::path linkPath           = std::string( argv[0] );
-	const std::filesystem::path sourceFilePath     = std::string( argv[1] );
-	const std::filesystem::path destHeaderFilePath = std::string( argv[2] );
-	const std::filesystem::path destSourceFilePath = std::string( argv[3] );
+	const std::filesystem::path linkPath           = std::string( argv[1] );
+	const std::filesystem::path sourceFilePath     = std::string( argv[2] );
+	const std::filesystem::path destHeaderFilePath = std::string( argv[3] );
+	const std::filesystem::path destSourceFilePath = std::string( argv[4] );
 
 	// 링크 검사
 	{
 		// 소스 링크 검사
 		if ( !std::filesystem::exists( linkPath ) )
 		{
-			ErrorLog( "에러! 해당 링크가 존재하지 않음! " );
+			ErrorLog( "에러! 해당 링크가 존재하지 않음! " + linkPath.generic_string() );
 			return 0;
 		}
 
 		// 소스 링크 검사
-		if ( !std::filesystem::exists(  sourceFilePath ) )
+		if ( !std::filesystem::exists( sourceFilePath ) )
 		{
-			ErrorLog( "에러! 해당 링크가 존재하지 않음! " );
+			ErrorLog( "에러! 해당 소스 파일이 존재하지 않음! " + sourceFilePath.generic_string() );
 			return 0;
 		}
 	}
@@ -241,7 +244,8 @@ int main( int argc, char *argv[] )
 			// 헤더를 파일에 쓴다.
 			{
 				fos 
-				<< "#include \"../Util/BaseSingleton.hpp\"" << std::endl
+				<< "#include \"../../Util/BaseSingleton.hpp\""                         << std::endl
+				<< "#include \"" + sourceFilePath.filename().generic_string() + "\""   << std::endl
 				<< ""             << std::endl;
 			}
 
@@ -345,7 +349,8 @@ int main( int argc, char *argv[] )
 			{
 				fos 
 				<< "#include \"stdafx.h\""                                             << std::endl
-				<< "#include \"" + sourceFilePath.filename().generic_string() + "\""   << std::endl
+				<< "#include \"Utils.h\""                                              << std::endl
+				<< "#include \"" + className + ".h\""                                  << std::endl
 				<< ""                                                                  << std::endl;
 			}
 
@@ -452,16 +457,16 @@ int main( int argc, char *argv[] )
 					const auto& enumName = typeData.second.enumName;
 
 					fos 
-					<< enumName + " TypeConverter::StringTo"+ enumName + "( const std::string& str ) const" << std::endl
-					<< "{"                                                                                  << std::endl
-					<< "	if ( auto iter = m_"+ MAL( enumName ) +"Cont.find( str ); iter != m_a.end() ) " << std::endl
-					<< "	{"                                                                              << std::endl
-					<< "		return iter.second;"                                                        << std::endl
-					<< "	}"                                                                              << std::endl
-					<< ""                                                                                   << std::endl
-					<< "	return " + enumName + "::NONE;"                                                 << std::endl
-					<< "};"                                                                                 << std::endl
-					<< ""                                                                                   << std::endl;
+					<< enumName + " TypeConverter::StringTo"+ enumName + "( const std::string& str ) const"                         << std::endl
+					<< "{"                                                                                                          << std::endl
+					<< "	if ( auto iter = m_"+ MAL( enumName ) +"Cont.find( str ); iter != m_"+ MAL( enumName ) +"Cont.end() ) " << std::endl
+					<< "	{"                                                                                                      << std::endl
+					<< "		return iter->second;"                                                                               << std::endl
+					<< "	}"                                                                                                      << std::endl
+					<< ""                                                                                                           << std::endl
+					<< "	return " + enumName + "::NONE;"                                                                         << std::endl
+					<< "};"                                                                                                         << std::endl
+					<< ""                                                                                                           << std::endl;
 				}
 			}
 		}
